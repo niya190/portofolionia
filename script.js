@@ -167,27 +167,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalBtnContent = btnSubmit.innerHTML;
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = `
-            <span>Membuka Email...</span>
+            <span>Mengirim...</span>
             <i class="fa-solid fa-spinner fa-spin"></i>
         `;
 
-        // Format subjek dan isi email
-        const subject = `Kontak Portofolio - ${nameVal}`;
-        const body = `Halo Nia Syahfitri,\n\nSaya mengunjungi website portofolio Anda.\n\nDetail Kontak:\n- Nama: ${nameVal}\n- Email: ${emailVal}\n\nPesan:\n"${messageVal}"`;
-
-        // Buat tautan mailto ke email pribadi Anda
-        const mailtoURL = `mailto:niaasyahfitri@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-        setTimeout(() => {
+        // Submit form using FormSubmit AJAX endpoint
+        fetch("https://formsubmit.co/ajax/niaasyahfitri@gmail.com", {
+            method: "POST",
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                name: nameVal,
+                email: emailVal,
+                message: messageVal
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = originalBtnContent;
 
-            // Buka aplikasi email default perangkat
-            window.location.href = mailtoURL;
+            // FormSubmit returns success: "true" as a string or boolean
+            if (data.success === "true" || data.success === true) {
+                // Trigger success toast feedback
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
 
-            // Reset Form kontak
-            contactForm.reset();
-        }, 1000);
+                // Clear input fields
+                contactForm.reset();
+            } else if (data.message && data.message.includes("Activation")) {
+                // Custom friendly alert for first-time activation
+                alert("Langkah Terakhir: Aktivasi Email Anda!\n\nFormSubmit telah mengirimkan email verifikasi ke niaasyahfitri@gmail.com.\n\nSilakan buka inbox email Anda (atau folder Spam/Promosi) dan klik link 'Activate Form' agar formulir kontak ini aktif dan bisa mengirim pesan.");
+                contactForm.reset();
+            } else {
+                alert("Gagal mengirim pesan: " + (data.message || "Silakan coba lagi."));
+            }
+        })
+        .catch(error => {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalBtnContent;
+            console.error('Error:', error);
+            alert("Terjadi kesalahan jaringan. Pastikan Anda terhubung ke internet dan coba lagi.");
+        });
     });
 
     /* ==========================================================================
