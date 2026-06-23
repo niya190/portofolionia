@@ -159,6 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
     contactForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        // MASUKKAN FORMSPREE ID ANDA DI SINI
+        const formspreeID = 'xnjknpla'; 
+
         const nameVal = document.getElementById('formName').value;
         const emailVal = document.getElementById('formEmail').value;
         const messageVal = document.getElementById('formMessage').value;
@@ -171,8 +174,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <i class="fa-solid fa-spinner fa-spin"></i>
         `;
 
-        // Submit form using FormSubmit AJAX endpoint
-        fetch("https://formsubmit.co/ajax/niaasyahfitri@gmail.com", {
+        if (formspreeID === 'YOUR_FORMSPREE_ID' || !formspreeID) {
+            alert("Formulir belum aktif. Silakan masukkan Formspree ID Anda di dalam berkas script.js terlebih dahulu.");
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalBtnContent;
+            return;
+        }
+
+        // Submit form using Formspree AJAX endpoint
+        fetch(`https://formspree.io/f/${formspreeID}`, {
             method: "POST",
             headers: { 
                 'Content-Type': 'application/json',
@@ -189,8 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = originalBtnContent;
 
-            // FormSubmit returns success: "true" as a string or boolean
-            if (data.success === "true" || data.success === true) {
+            if (data.ok) {
                 // Trigger success toast feedback
                 toast.classList.add('show');
                 setTimeout(() => {
@@ -199,12 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Clear input fields
                 contactForm.reset();
-            } else if (data.message && data.message.includes("Activation")) {
-                // Custom friendly alert for first-time activation
-                alert("Langkah Terakhir: Aktivasi Email Anda!\n\nFormSubmit telah mengirimkan email verifikasi ke niaasyahfitri@gmail.com.\n\nSilakan buka inbox email Anda (atau folder Spam/Promosi) dan klik link 'Activate Form' agar formulir kontak ini aktif dan bisa mengirim pesan.");
-                contactForm.reset();
             } else {
-                alert("Gagal mengirim pesan: " + (data.message || "Silakan coba lagi."));
+                alert("Gagal mengirim pesan: " + (data.error || "Silakan coba lagi."));
             }
         })
         .catch(error => {
